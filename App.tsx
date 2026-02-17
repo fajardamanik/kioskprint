@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { AppState, PrintJob, NavTab } from './types';
-import Header from './components/Header';
-import Stepper from './components/Stepper';
-import UploadView from './components/UploadView';
-import CalculatingView from './components/CalculatingView';
-import PaymentView from './components/PaymentView';
-import ConfirmedView from './components/ConfirmedView';
-import BottomNav from './components/BottomNav';
+import { AppState, PrintJob, NavTab } from './types.ts';
+import Header from './components/Header.tsx';
+import Stepper from './components/Stepper.tsx';
+import UploadView from './components/UploadView.tsx';
+import CalculatingView from './components/CalculatingView.tsx';
+import PaymentView from './components/PaymentView.tsx';
+import ConfirmedView from './components/ConfirmedView.tsx';
+import BottomNav from './components/BottomNav.tsx';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.UPLOAD);
