@@ -1,23 +1,26 @@
 
-export enum AppStep {
+export enum AppState {
   UPLOAD = 'UPLOAD',
-  ANALYZING = 'ANALYZING',
+  CALCULATING = 'CALCULATING',
   PAYMENT = 'PAYMENT',
-  SUCCESS = 'SUCCESS'
+  CONFIRMED = 'CONFIRMED'
 }
 
-export interface FileInfo {
-  name: string;
-  size: string;
-  pages: number;
-  format: string;
-}
-
-export interface OrderDetails {
-  id: string;
-  baseCost: number;
+export interface PrintJob {
+  fileName: string;
+  fileSize: string;
+  pageCount: number;
+  inkLevel: 'Low' | 'Medium' | 'High';
+  cost: number;
   uniqueCode: number;
   total: number;
-  date: string;
-  file?: FileInfo;
+  timestamp: string;
+  orderId: string;
+}
+
+export enum NavTab {
+  UPLOAD = 'UPLOAD',
+  HISTORY = 'HISTORY',
+  SETTINGS = 'SETTINGS',
+  RECEIPT = 'RECEIPT'
 }

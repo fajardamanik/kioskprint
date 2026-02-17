@@ -1,87 +1,99 @@
 
-import React, { useState, useEffect } from 'react';
-import { AppStep, OrderDetails, FileInfo } from './types';
-import UploadScreen from './screens/UploadScreen';
-import AnalyzingScreen from './screens/AnalyzingScreen';
-import PaymentScreen from './screens/PaymentScreen';
-import SuccessScreen from './screens/SuccessScreen';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AppState, PrintJob, NavTab } from './types';
+import Header from './components/Header';
+import Stepper from './components/Stepper';
+import UploadView from './components/UploadView';
+import CalculatingView from './components/CalculatingView';
+import PaymentView from './components/PaymentView';
+import ConfirmedView from './components/ConfirmedView';
+import BottomNav from './components/BottomNav';
 
 const App: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<AppStep>(AppStep.UPLOAD);
-  const [orderDetails, setOrderDetails] = useState<OrderDetails>({
-    id: '#KP-' + Math.floor(Math.random() * 900000 + 100000),
-    baseCost: 3000,
-    uniqueCode: 134,
-    total: 3134,
-    date: new Date().toLocaleString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    }),
-  });
+  const [appState, setAppState] = useState<AppState>(AppState.UPLOAD);
+  const [currentTab, setCurrentTab] = useState<NavTab>(NavTab.UPLOAD);
+  const [currentJob, setCurrentJob] = useState<PrintJob | null>(null);
 
-  const handleFileUpload = (file: File) => {
-    // Mock file info extraction
-    const mockFile: FileInfo = {
-      name: file.name,
-      size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
-      pages: 12, // Mocked page count
-      format: 'A4 Portrait'
+  const handleFileUpload = useCallback((file: File) => {
+    // Generate a mock job
+    const uniqueCode = Math.floor(100 + Math.random() * 900);
+    const mockJob: PrintJob = {
+      fileName: file.name,
+      fileSize: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+      pageCount: 12, // Default mock
+      inkLevel: 'Medium',
+      cost: 3000,
+      uniqueCode: uniqueCode,
+      total: 3000 + uniqueCode,
+      timestamp: new Date().toLocaleString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }),
+      orderId: 'KP-' + Math.floor(100000 + Math.random() * 900000)
     };
-    
-    setOrderDetails(prev => ({
-      ...prev,
-      file: mockFile,
-      baseCost: mockFile.pages * 250, // Example calculation
-      total: (mockFile.pages * 250) + prev.uniqueCode
-    }));
-    
-    setCurrentStep(AppStep.ANALYZING);
+
+    setCurrentJob(mockJob);
+    setAppState(AppState.CALCULATING);
+  }, []);
+
+  const handleConfirmPayment = () => {
+    setAppState(AppState.CONFIRMED);
+    setCurrentTab(NavTab.RECEIPT);
   };
 
-  const handleAnalysisComplete = () => {
-    setCurrentStep(AppStep.PAYMENT);
-  };
-
-  const handlePaymentConfirm = () => {
-    setCurrentStep(AppStep.SUCCESS);
-  };
-
-  const handleRestart = () => {
-    setCurrentStep(AppStep.UPLOAD);
+  const resetFlow = () => {
+    setAppState(AppState.UPLOAD);
+    setCurrentTab(NavTab.UPLOAD);
+    setCurrentJob(null);
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto relative flex flex-col bg-white dark:bg-background-dark shadow-2xl overflow-hidden">
-      {currentStep === AppStep.UPLOAD && (
-        <UploadScreen onUpload={handleFileUpload} />
-      )}
-      
-      {currentStep === AppStep.ANALYZING && (
-        <AnalyzingScreen 
-          file={orderDetails.file!} 
-          onComplete={handleAnalysisComplete} 
-          onCancel={handleRestart}
-        />
-      )}
-      
-      {currentStep === AppStep.PAYMENT && (
-        <PaymentScreen 
-          orderDetails={orderDetails} 
-          onConfirm={handlePaymentConfirm} 
-          onBack={handleRestart}
-        />
-      )}
-      
-      {currentStep === AppStep.SUCCESS && (
-        <SuccessScreen 
-          orderDetails={orderDetails} 
-          onRestart={handleRestart}
-        />
-      )}
+    <div className="min-h-screen bg-background-light flex flex-col max-w-md mx-auto relative overflow-hidden shadow-2xl">
+      <Header />
+
+      <main className="flex-1 flex flex-col overflow-y-auto pb-24 px-4 pt-6">
+        {appState !== AppState.CONFIRMED && <Stepper currentStep={appState} />}
+
+        <div className="flex-1 flex flex-col">
+          {appState === AppState.UPLOAD && (
+            <UploadView onFileSelect={handleFileUpload} />
+          )}
+
+          {appState === AppState.CALCULATING && currentJob && (
+            <CalculatingView 
+              job={currentJob} 
+              onComplete={() => setAppState(AppState.PAYMENT)} 
+              onCancel={resetFlow}
+            />
+          )}
+
+          {appState === AppState.PAYMENT && currentJob && (
+            <PaymentView 
+              job={currentJob} 
+              onBack={() => setAppState(AppState.UPLOAD)}
+              onPaid={handleConfirmPayment}
+            />
+          )}
+
+          {appState === AppState.CONFIRMED && currentJob && (
+            <ConfirmedView 
+              job={currentJob} 
+              onPrint={resetFlow}
+            />
+          )}
+        </div>
+      </main>
+
+      <BottomNav 
+        activeTab={currentTab} 
+        onTabChange={(tab) => {
+          setCurrentTab(tab);
+          if (tab === NavTab.UPLOAD) setAppState(AppState.UPLOAD);
+        }} 
+      />
     </div>
   );
 };
