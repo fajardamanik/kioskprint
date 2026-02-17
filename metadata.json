@@ -1,0 +1,5 @@
+{
+  "name": "KioskPrint - Smart Self-Service Printing",
+  "description": "A streamlined self-service printing application that calculates costs based on PDF analysis and provides secure bank transfer payment options.",
+  "requestFramePermissions": []
+}
